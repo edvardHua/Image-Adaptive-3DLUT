@@ -276,7 +276,7 @@ class Generator3DLUT_identity(nn.Module):
         self.TrilinearInterpolation = TrilinearInterpolation()
 
     def forward(self, x):
-        return self.TrilinearInterpolation(self.LUT, x)
+        return self.TrilinearInterpolation.apply(self.LUT, x)
 
 
 class Generator3DLUT_zero(nn.Module):
@@ -288,7 +288,7 @@ class Generator3DLUT_zero(nn.Module):
         self.TrilinearInterpolation = TrilinearInterpolation()
 
     def forward(self, x):
-        return self.TrilinearInterpolation(self.LUT, x)
+        return self.TrilinearInterpolation.apply(self.LUT, x)
 
 
 class TrilinearInterpolation(torch.autograd.Function):
@@ -342,7 +342,7 @@ class TrilinearInterpolation(torch.autograd.Function):
                                                   grad_x.permute(1, 0, 2, 3).contiguous(), grad_LUT, self.dim,
                                                   self.shift, self.binsize, self.W, self.H, self.batch)
         else:
-            trilinear.trilinear_backward(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W, self.H,
+            trilinear.backward(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W, self.H,
                                          self.batch)
 
         return grad_LUT, None

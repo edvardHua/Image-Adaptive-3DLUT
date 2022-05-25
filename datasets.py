@@ -571,10 +571,7 @@ class ImageDataset_PPR10K_sRGB(Dataset):
         return {"A_input": img_input, "A_exptC": img_exptC, "input_name": img_name}
 
     def __len__(self):
-        if self.mode == "train":
-            return len(self.set1_input_files)
-        elif self.mode == "test":
-            return len(self.test_input_files)
+       return len(self.set1_input_files)
 
 
 if __name__ == '__main__':
