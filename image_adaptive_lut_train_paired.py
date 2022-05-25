@@ -111,14 +111,14 @@ if opt.input_color_space == 'sRGB':
     # )
 
     dataloader = DataLoader(
-        ImageDataset_PPR10K_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/ppr_10k", mode="train"),
+        ImageDataset_PPR10K_sRGB("ppr_10k", mode="train"),
         batch_size=opt.batch_size,
         shuffle=True,
         num_workers=opt.n_cpu,
     )
 
     psnr_dataloader = DataLoader(
-        ImageDataset_PPR10K_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/ppr_10k", mode="test"),
+        ImageDataset_PPR10K_sRGB("ppr_10k", mode="test"),
         batch_size=1,
         shuffle=False,
         num_workers=1,
@@ -169,7 +169,7 @@ def generator_eval(img):
     weights_norm = torch.mean(pred ** 2)
 
     combine_A = img.new(img.size())
-    combine_A = trilinear_(LUT, img)
+    combine_A = trilinear_.apply(LUT, img)
 
     return combine_A, weights_norm
 
@@ -184,6 +184,7 @@ def calculate_psnr():
         fake_B = torch.round(fake_B * 255)
         real_B = torch.round(real_B * 255)
         mse = criterion_pixelwise(fake_B, real_B)
+        # sometime mse will equal to zero
         psnr = 10 * math.log10(255.0 * 255.0 / mse.item())
         avg_psnr += psnr
 
