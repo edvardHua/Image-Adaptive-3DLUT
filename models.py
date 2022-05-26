@@ -315,10 +315,10 @@ class TrilinearInterpolation(torch.autograd.Function):
 
         if x.is_cuda:
             if batch == 1:
-                trilinear.trilinear_forward_cuda(LUT, x, output, dim, shift, binsize, W, H, batch)
+                trilinear.forward(LUT, x, output, dim, shift, binsize, W, H, batch)
             elif batch > 1:
                 output = output.permute(1, 0, 2, 3).contiguous()
-                trilinear.trilinear_forward_cuda(LUT, x.permute(1, 0, 2, 3).contiguous(), output, dim, shift, binsize,
+                trilinear.forward(LUT, x.permute(1, 0, 2, 3).contiguous(), output, dim, shift, binsize,
                                                  W, H, batch)
                 output = output.permute(1, 0, 2, 3).contiguous()
 
@@ -335,10 +335,10 @@ class TrilinearInterpolation(torch.autograd.Function):
         if grad_x.is_cuda:
             grad_LUT = grad_LUT.cuda()
             if self.batch == 1:
-                trilinear.trilinear_backward_cuda(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W,
+                trilinear.backward(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W,
                                                   self.H, self.batch)
             elif self.batch > 1:
-                trilinear.trilinear_backward_cuda(self.x.permute(1, 0, 2, 3).contiguous(),
+                trilinear.backward(self.x.permute(1, 0, 2, 3).contiguous(),
                                                   grad_x.permute(1, 0, 2, 3).contiguous(), grad_LUT, self.dim,
                                                   self.shift, self.binsize, self.W, self.H, self.batch)
         else:
