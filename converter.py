@@ -8,6 +8,7 @@
 
 from models import *
 import coremltools as ct
+from PIL import Image
 
 
 def model_to_coreml():
@@ -15,7 +16,7 @@ def model_to_coreml():
     用来把模型转换成 coreml，方便快速测试在手机上的效果
     """
     classifier = Classifier()
-    classifier.load_state_dict(torch.load("resources/classifier.pth", map_location="cpu"))
+    classifier.load_state_dict(torch.load("resources/pretrained_models/sRGB/classifier.pth", map_location="cpu"))
     classifier.eval()
 
     example_input = torch.rand(1, 3, 256, 256)
@@ -23,12 +24,17 @@ def model_to_coreml():
 
     image_input = ct.ImageType(shape=(1, 3, 256, 256),
                                channel_first=True,
-                               scale=1 / 255.)
+                               scale=1 / 255.,
+                               color_layout="RGB")
     model = ct.convert(
         traced_model,
         inputs=[image_input]
     )
-    model.save("classifier.mlmodel")
+    example_img = Image.open("demo_images/sRGB/sea.jpg").resize((256, 256))
+    out_dict = model.predict({"img_input": example_img})
+    print(out_dict['var_85'])
+    print("ori = 1.465 0.798 -1.3533")
+    model.save("/Users/zihua.zeng/Workspace/demo-oc/Resources/WeightPredictor.mlmodel")
 
 
 def lut_tesnor_to_text():

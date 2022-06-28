@@ -14,7 +14,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--image_dir", type=str, default="demo_images", help="directory of image")
 parser.add_argument("--image_name", type=str, default="22.png", help="name of image")
 parser.add_argument("--input_color_space", type=str, default="sRGB", help="input color space: sRGB or XYZ")
-parser.add_argument("--model_dir", type=str, default="pretrained_models", help="directory of pretrained models")
+parser.add_argument("--model_dir", type=str, default="resources/pretrained_models",
+                    help="directory of pretrained models")
 parser.add_argument("--output_dir", type=str, default="demo_results", help="directory to save results")
 opt = parser.parse_args()
 opt.model_dir = opt.model_dir + '/' + opt.input_color_space
@@ -27,7 +28,7 @@ cuda = True if torch.cuda.is_available() else False
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 criterion_pixelwise = torch.nn.MSELoss()
-LUT0 = Generator3DLUT_identity()
+LUT0 = Generator3DLUT_zero()
 LUT1 = Generator3DLUT_zero()
 LUT2 = Generator3DLUT_zero()
 # LUT3 = Generator3DLUT_zero()
@@ -64,7 +65,7 @@ def generate_LUT(img):
     pred = classifier(img).squeeze()
 
     LUT = pred[0] * LUT0.LUT + pred[1] * LUT1.LUT + pred[2] * LUT2.LUT  # + pred[3] * LUT3.LUT + pred[4] * LUT4.LUT
-
+    print(pred[0], pred[1], pred[2])
     return LUT
 
 
@@ -102,9 +103,7 @@ def get_concat_h(im1, im2):
     dst.paste(im2, (im1.width, 0))
     return dst
 
+
 out = get_concat_h(ori_img, im)
 
 out.save('%s/%s' % (opt.output_dir, fn), quality=95)
-
-
-
