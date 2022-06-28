@@ -233,6 +233,30 @@ class Classifier(nn.Module):
         return self.model(img_input)
 
 
+class resnet18_224(nn.Module):
+
+    def __init__(self, out_dim=5, aug_test=False):
+        super(resnet18_224, self).__init__()
+
+        self.aug_test = aug_test
+        net = models.resnet18(pretrained=True)
+        # self.mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
+        # self.std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
+
+        self.upsample = nn.Upsample(size=(224, 224), mode='bilinear')
+        net.fc = nn.Linear(512, out_dim)
+        self.model = net
+
+    def forward(self, x):
+        x = self.upsample(x)
+        if self.aug_test:
+            # x = torch.cat((x, torch.rot90(x, 1, [2, 3]), torch.rot90(x, 3, [2, 3])), 0)
+            x = torch.cat((x, torch.flip(x, [3])), 0)
+        f = self.model(x)
+
+        return f
+
+
 class Classifier_unpaired(nn.Module):
     def __init__(self, in_channels=3):
         super(Classifier_unpaired, self).__init__()
@@ -265,7 +289,9 @@ class Generator3DLUT_identity(nn.Module):
         self.LUT = torch.zeros(3, dim, dim, dim, dtype=torch.float)
 
         for i in range(0, dim):
+            # j 是高
             for j in range(0, dim):
+                # k 是宽
                 for k in range(0, dim):
                     n = i * dim * dim + j * dim + k
                     x = LUT[n].split()
@@ -319,7 +345,7 @@ class TrilinearInterpolation(torch.autograd.Function):
             elif batch > 1:
                 output = output.permute(1, 0, 2, 3).contiguous()
                 trilinear.forward(LUT, x.permute(1, 0, 2, 3).contiguous(), output, dim, shift, binsize,
-                                                 W, H, batch)
+                                  W, H, batch)
                 output = output.permute(1, 0, 2, 3).contiguous()
 
         else:
@@ -336,14 +362,14 @@ class TrilinearInterpolation(torch.autograd.Function):
             grad_LUT = grad_LUT.cuda()
             if self.batch == 1:
                 trilinear.backward(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W,
-                                                  self.H, self.batch)
+                                   self.H, self.batch)
             elif self.batch > 1:
                 trilinear.backward(self.x.permute(1, 0, 2, 3).contiguous(),
-                                                  grad_x.permute(1, 0, 2, 3).contiguous(), grad_LUT, self.dim,
-                                                  self.shift, self.binsize, self.W, self.H, self.batch)
+                                   grad_x.permute(1, 0, 2, 3).contiguous(), grad_LUT, self.dim,
+                                   self.shift, self.binsize, self.W, self.H, self.batch)
         else:
             trilinear.backward(self.x, grad_x, grad_LUT, self.dim, self.shift, self.binsize, self.W, self.H,
-                                         self.batch)
+                               self.batch)
 
         return grad_LUT, None
 
@@ -373,7 +399,8 @@ class TV_3D(nn.Module):
 
 
 if __name__ == '__main__':
-    # from torchprofile import profile_macs
+    from torchprofile import profile_macs
+
     #
     # cls = Classifier()
     # inp = torch.rand((1, 3, 256, 256))
@@ -383,10 +410,17 @@ if __name__ == '__main__':
     # # 0.074 GFLOPs
     # print(macs / 1e9)
 
-    # 测试一下 TV_3D 这个网络
-    tv = TV_3D()
-    dummy_inp = Generator3DLUT_zero()
-    print(dummy_inp.LUT.shape)
+    # 测试一下 TV_3D 这个模块
+    # tv = TV_3D()
+    # dummy_inp = Generator3DLUT_zero()
+    # print(dummy_inp.LUT.shape)
+    #
+    # out = tv(dummy_inp)
+    # print(out[0].shape, out[1].shape)
 
-    out = tv(dummy_inp)
-    print(out[0].shape, out[1].shape)
+    # 测试 resent 网络
+    dummy_inp = torch.randn((1, 3, 224, 224))
+    resnet = resnet18_224(out_dim=3)
+    out = resnet(dummy_inp)
+    macs = profile_macs(resnet, dummy_inp)
+    print(macs / 1e9)

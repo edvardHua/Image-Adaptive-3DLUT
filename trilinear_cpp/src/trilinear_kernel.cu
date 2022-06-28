@@ -7,8 +7,15 @@
             i += blockDim.x * gridDim.x)
 
 
-__global__ void TriLinearForward(const int nthreads, const float* lut, const float* image, float* output, const int dim, const int shift, const float binsize, const int width, const int height, const int batch) {
+__global__ void TriLinearForward(const int nthreads, const float* lut, const float* image,
+float* output, const int dim, const int shift, const float binsize, const int width,
+const int height, const int batch) {
+
         CUDA_1D_KERNEL_LOOP(index, nthreads) {
+        // lut shape = 3x33x33x33
+        // dim = lut.shape[-1]
+        // shift = dim**3
+        // binsize = 1.0001 / (dim - 1)
 
         float r = image[index];
 	float g = image[index + width * height * batch];
@@ -18,6 +25,7 @@ __global__ void TriLinearForward(const int nthreads, const float* lut, const flo
 	int g_id = floor(g / binsize);
 	int b_id = floor(b / binsize);
 
+        // 求模，但是可以精确到小数点
         float r_d = fmod(r,binsize) / binsize;
         float g_d = fmod(g,binsize) / binsize;
         float b_d = fmod(b,binsize) / binsize;

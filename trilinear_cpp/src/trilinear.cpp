@@ -66,7 +66,7 @@ void TriLinearForwardCpu(const float* lut, const float* image, float* output, co
 	float g_d = fmod(g,binsize) / binsize;
 	float b_d = fmod(b,binsize) / binsize;
 
-	int id000 = r_id + g_id * dim + b_id * dim * dim;
+	int id000 = r_id + g_id * dim + b_id * dim * dim
         int id100 = r_id + 1 + g_id * dim + b_id * dim * dim;
         int id010 = r_id + (g_id + 1) * dim + b_id * dim * dim;
         int id110 = r_id + 1 + (g_id + 1) * dim + b_id * dim * dim;
