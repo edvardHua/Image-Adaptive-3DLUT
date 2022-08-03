@@ -516,6 +516,66 @@ def convert_tif_to_jpg():
         os.remove(os.path.join(target_path, fn))
 
 
+class ImageDataset_apple_sRGB(Dataset):
+    def __init__(self, root, mode="train"):
+        self.root = root
+        self.mode = mode
+        self.set1_input_files = os.listdir(os.path.join(root, "input"))
+        self.set1_expert_files = os.listdir(os.path.join(root, "output"))
+
+        self.set1_input_files = list(filter(lambda x: x.endswith(".jpg"), self.set1_input_files))
+        self.set1_expert_files = list(filter(lambda x: x.endswith(".jpg"), self.set1_expert_files))
+
+        self.set1_input_files.sort()
+        self.set1_expert_files.sort()
+
+        if self.mode == "train":
+            self.set1_input_files = self.set1_input_files[:-250]
+            self.set1_expert_files = self.set1_expert_files[:-250]
+
+        if self.mode == "test":
+            self.set1_input_files = self.set1_input_files[-250:]
+            self.set1_expert_files = self.set1_expert_files[-250:]
+
+    def __getitem__(self, index):
+
+        index_id = index % len(self.set1_input_files)
+
+        img_name = self.set1_input_files[index_id]
+        img_input = Image.open(os.path.join(self.root, "input", self.set1_input_files[index_id]))
+        img_exptC = Image.open(os.path.join(self.root, "output", self.set1_expert_files[index_id]))
+
+        if self.mode == "train":
+            ratio_H = np.random.uniform(0.6, 1.0)
+            ratio_W = np.random.uniform(0.6, 1.0)
+            W, H = img_input._size
+            crop_h = round(H * ratio_H)
+            crop_w = round(W * ratio_W)
+            i, j, h, w = transforms.RandomCrop.get_params(img_input, output_size=(crop_h, crop_w))
+            img_input = TF.crop(img_input, i, j, h, w)
+            img_exptC = TF.crop(img_exptC, i, j, h, w)
+            # img_input = TF.resized_crop(img_input, i, j, h, w, (320,320))
+            # img_exptC = TF.resized_crop(img_exptC, i, j, h, w, (320,320))
+
+            if np.random.random() > 0.5:
+                img_input = TF.hflip(img_input)
+                img_exptC = TF.hflip(img_exptC)
+
+            a = np.random.uniform(0.8, 1.2)
+            img_input = TF.adjust_brightness(img_input, a)
+
+            a = np.random.uniform(0.8, 1.2)
+            img_input = TF.adjust_saturation(img_input, a)
+
+        img_input = TF.to_tensor(img_input)
+        img_exptC = TF.to_tensor(img_exptC)
+
+        return {"A_input": img_input, "A_exptC": img_exptC, "input_name": img_name}
+
+    def __len__(self):
+        return len(self.set1_input_files)
+
+
 class ImageDataset_PPR10K_sRGB(Dataset):
     def __init__(self, root, mode="train"):
         self.root = root
@@ -571,19 +631,20 @@ class ImageDataset_PPR10K_sRGB(Dataset):
         return {"A_input": img_input, "A_exptC": img_exptC, "input_name": img_name}
 
     def __len__(self):
-       return len(self.set1_input_files)
+        return len(self.set1_input_files)
 
 
 if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     dataloader = DataLoader(
-        ImageDataset_PPR10K_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/ppr_10k/", mode="train"),
+        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/shopee_apple_miniset/train", mode="test"),
         batch_size=1,
         shuffle=True
     )
 
     for batch in dataloader:
         from IPython import embed
+
         embed()
-        pass
+        break

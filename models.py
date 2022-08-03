@@ -282,9 +282,9 @@ class Generator3DLUT_identity(nn.Module):
     def __init__(self, dim=33):
         super(Generator3DLUT_identity, self).__init__()
         if dim == 33:
-            file = open("IdentityLUT33.txt", 'r')
+            file = open("resources/IdentityLUT33.txt", 'r')
         elif dim == 64:
-            file = open("IdentityLUT64.txt", 'r')
+            file = open("resources/IdentityLUT64.txt", 'r')
         LUT = file.readlines()
         self.LUT = torch.zeros(3, dim, dim, dim, dtype=torch.float)
 
@@ -424,3 +424,9 @@ if __name__ == '__main__':
     out = resnet(dummy_inp)
     macs = profile_macs(resnet, dummy_inp)
     print(macs / 1e9)
+
+    classifier = Classifier()
+    classifier.load_state_dict(torch.load("resources/pretrained_models/sRGB/classifier.pth", map_location="cpu"))
+    classifier.eval()
+
+    torch.onnx.export(classifier, dummy_inp, "weight_predictor.onnx", )

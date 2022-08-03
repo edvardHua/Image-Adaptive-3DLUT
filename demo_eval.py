@@ -12,7 +12,7 @@ import torchvision.transforms.functional as TF
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--image_dir", type=str, default="demo_images", help="directory of image")
-parser.add_argument("--image_name", type=str, default="22.png", help="name of image")
+parser.add_argument("--image_name", type=str, default="001.png", help="name of image")
 parser.add_argument("--input_color_space", type=str, default="sRGB", help="input color space: sRGB or XYZ")
 parser.add_argument("--model_dir", type=str, default="resources/pretrained_models",
                     help="directory of pretrained models")
@@ -89,6 +89,16 @@ LUT = generate_LUT(img)
 # generate image
 # img shape = 1, 3, xx, xx
 result = trilinear_.apply(LUT, img)
+
+# save to binary text
+print(result.shape)
+b, c, h, w = result.shape
+
+raw_float_result = open("raw_float_result.txt", "w")
+for ci in range(c):
+    for hi in range(h):
+        for wi in range(w):
+            raw_float_result.write("%.6f " % (result[0, ci, hi, wi]))
 
 # save image
 ndarr = result.squeeze().mul_(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to('cpu', torch.uint8).numpy()

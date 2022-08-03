@@ -40,7 +40,6 @@ parser.add_argument("--output_dir", type=str, default="LUTs/paired/fiveK_480p_3L
 opt = parser.parse_args()
 
 opt.output_dir = opt.output_dir + '_' + opt.input_color_space
-print(opt)
 
 os.makedirs("saved_models/%s" % opt.output_dir, exist_ok=True)
 
@@ -111,14 +110,16 @@ if opt.input_color_space == 'sRGB':
     # )
 
     dataloader = DataLoader(
-        ImageDataset_PPR10K_sRGB("ppr_10k", mode="train"),
+        # ImageDataset_PPR10K_sRGB("ppr_10k", mode="train"),
+        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/shopee_apple_miniset/train", mode="train"),
         batch_size=opt.batch_size,
         shuffle=True,
         num_workers=opt.n_cpu,
     )
 
     psnr_dataloader = DataLoader(
-        ImageDataset_PPR10K_sRGB("ppr_10k", mode="test"),
+        # ImageDataset_PPR10K_sRGB("ppr_10k", mode="test"),
+        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/shopee_apple_miniset/train", mode="test"),
         batch_size=1,
         shuffle=False,
         num_workers=1,

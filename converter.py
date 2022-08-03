@@ -26,15 +26,18 @@ def model_to_coreml():
                                channel_first=True,
                                scale=1 / 255.,
                                color_layout="RGB")
+
+    classifier_config = ct.ClassifierConfig(["w0", "w1", "w2"])
     model = ct.convert(
         traced_model,
-        inputs=[image_input]
+        inputs=[image_input],
+        classifier_config=classifier_config
     )
     example_img = Image.open("demo_images/sRGB/sea.jpg").resize((256, 256))
     out_dict = model.predict({"img_input": example_img})
     print(out_dict['var_85'])
     print("ori = 1.465 0.798 -1.3533")
-    model.save("/Users/zihua.zeng/Workspace/demo-oc/Resources/WeightPredictor.mlmodel")
+    model.save("WeightPredictorTesting.mlmodel")
 
 
 def lut_tesnor_to_text():
