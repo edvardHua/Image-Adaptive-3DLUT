@@ -52,9 +52,9 @@ criterion_pixelwise = torch.nn.MSELoss()
 
 # Initialize generator and discriminator
 # 这三个 lut 都是 3x33x33x33
-LUT0 = Generator3DLUT_identity()
-LUT1 = Generator3DLUT_zero()
-LUT2 = Generator3DLUT_zero()
+LUT0 = Generator3DLUT_identity(dim=36)
+LUT1 = Generator3DLUT_zero(dim=36)
+LUT2 = Generator3DLUT_zero(dim=36)
 # LUT3 = Generator3DLUT_zero()
 # LUT4 = Generator3DLUT_zero()
 classifier = Classifier()

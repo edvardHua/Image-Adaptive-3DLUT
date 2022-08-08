@@ -285,6 +285,9 @@ class Generator3DLUT_identity(nn.Module):
             file = open("resources/IdentityLUT33.txt", 'r')
         elif dim == 64:
             file = open("resources/IdentityLUT64.txt", 'r')
+        elif dim == 36:
+            file = open("resources/IdentityLUT36.txt", "r")
+
         LUT = file.readlines()
         self.LUT = torch.zeros(3, dim, dim, dim, dtype=torch.float)
 
