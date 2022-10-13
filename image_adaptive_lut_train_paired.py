@@ -16,16 +16,20 @@ from torch.autograd import Variable
 
 from models import *
 from datasets import *
+from pathlib import Path
 
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", type=int, default=0,
                     help="epoch to start training from, 0 starts from scratch, >0 starts from saved checkpoints")
 parser.add_argument("--n_epochs", type=int, default=400, help="total number of epochs of training")
-parser.add_argument("--dataset_name", type=str, default="fiveK", help="name of the dataset")
+parser.add_argument("--dataset_path", type=str,
+                    default="/Users/zihua.zeng/Dataset/色彩增强数据集/Apple_Enhance_sub/Apple_Enhance",
+                    help="Training Dataset path")
 parser.add_argument("--input_color_space", type=str, default="sRGB", help="input color space: sRGB or XYZ")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
@@ -35,13 +39,16 @@ parser.add_argument("--lambda_smooth", type=float, default=0.0001, help="smooth 
 parser.add_argument("--lambda_monotonicity", type=float, default=10.0, help="monotonicity regularization")
 parser.add_argument("--n_cpu", type=int, default=1, help="number of cpu threads to use during batch generation")
 parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between model checkpoints")
-parser.add_argument("--output_dir", type=str, default="LUTs/paired/fiveK_480p_3LUT_sm_1e-4_mn_10",
+parser.add_argument("--output_dir", type=str, default="",
                     help="path to save model")
 opt = parser.parse_args()
 
 opt.output_dir = opt.output_dir + '_' + opt.input_color_space
 
-os.makedirs("saved_models/%s" % opt.output_dir, exist_ok=True)
+if not opt.output_dir:
+    opt.output_dir = time.strftime("%Y-%m-%d_%H_%M_%S")
+
+Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 # Tensor type
@@ -51,7 +58,6 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 criterion_pixelwise = torch.nn.MSELoss()
 
 # Initialize generator and discriminator
-# 这三个 lut 都是 3x33x33x33
 LUT0 = Generator3DLUT_identity(dim=36)
 LUT1 = Generator3DLUT_zero(dim=36)
 LUT2 = Generator3DLUT_zero(dim=36)
@@ -94,51 +100,21 @@ optimizer_G = torch.optim.Adam(
     itertools.chain(classifier.parameters(), LUT0.parameters(), LUT1.parameters(), LUT2.parameters()), lr=opt.lr,
     betas=(opt.b1, opt.b2))  # , LUT3.parameters(), LUT4.parameters()
 
-if opt.input_color_space == 'sRGB':
-    # dataloader = DataLoader(
-    #     ImageDataset_sRGB("../data/%s" % opt.dataset_name, mode="train"),
-    #     batch_size=opt.batch_size,
-    #     shuffle=True,
-    #     num_workers=opt.n_cpu,
-    # )
-    #
-    # psnr_dataloader = DataLoader(
-    #     ImageDataset_sRGB("../data/%s" % opt.dataset_name, mode="test"),
-    #     batch_size=1,
-    #     shuffle=False,
-    #     num_workers=1,
-    # )
+dataloader = DataLoader(
+    # ImageDataset_PPR10K_sRGB("ppr_10k", mode="train"),
+    ImageDataset_apple_sRGB(opt.dataset_path, mode="train"),
+    batch_size=opt.batch_size,
+    shuffle=True,
+    num_workers=opt.n_cpu,
+)
 
-    dataloader = DataLoader(
-        # ImageDataset_PPR10K_sRGB("ppr_10k", mode="train"),
-        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/shopee_apple_miniset/train", mode="train"),
-        batch_size=opt.batch_size,
-        shuffle=True,
-        num_workers=opt.n_cpu,
-    )
-
-    psnr_dataloader = DataLoader(
-        # ImageDataset_PPR10K_sRGB("ppr_10k", mode="test"),
-        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/shopee_apple_miniset/train", mode="test"),
-        batch_size=1,
-        shuffle=False,
-        num_workers=1,
-    )
-
-elif opt.input_color_space == 'XYZ':
-    dataloader = DataLoader(
-        ImageDataset_XYZ("../data/%s" % opt.dataset_name, mode="train"),
-        batch_size=opt.batch_size,
-        shuffle=True,
-        num_workers=opt.n_cpu,
-    )
-
-    psnr_dataloader = DataLoader(
-        ImageDataset_XYZ("../data/%s" % opt.dataset_name, mode="test"),
-        batch_size=1,
-        shuffle=False,
-        num_workers=1,
-    )
+psnr_dataloader = DataLoader(
+    # ImageDataset_PPR10K_sRGB("ppr_10k", mode="test"),
+    ImageDataset_apple_sRGB(opt.dataset_path, mode="test"),
+    batch_size=1,
+    shuffle=False,
+    num_workers=1,
+)
 
 
 def generator_train(img):
@@ -169,7 +145,6 @@ def generator_eval(img):
 
     weights_norm = torch.mean(pred ** 2)
 
-    combine_A = img.new(img.size())
     combine_A = trilinear_.apply(LUT, img)
 
     return combine_A, weights_norm
@@ -278,9 +253,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
         max_epoch = epoch
     sys.stdout.write(" [PSNR: %f] [max PSNR: %f, epoch: %d]\n" % (avg_psnr, max_psnr, max_epoch))
 
-    # if (epoch+1) % 10 == 0:
-    #    visualize_result(epoch+1)
-
     if epoch % opt.checkpoint_interval == 0:
         # Save model checkpoints
         LUTs = {"0": LUT0.state_dict(), "1": LUT1.state_dict(),
@@ -289,4 +261,5 @@ for epoch in range(opt.epoch, opt.n_epochs):
         torch.save(classifier.state_dict(), "saved_models/%s/classifier_%d.pth" % (opt.output_dir, epoch))
         file = open('saved_models/%s/result.txt' % opt.output_dir, 'a')
         file.write(" [PSNR: %f] [max PSNR: %f, epoch: %d]\n" % (avg_psnr, max_psnr, max_epoch))
+        file.flush()
         file.close()
