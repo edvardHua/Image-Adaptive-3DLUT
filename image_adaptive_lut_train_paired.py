@@ -43,10 +43,10 @@ parser.add_argument("--output_dir", type=str, default="",
                     help="path to save model")
 opt = parser.parse_args()
 
-opt.output_dir = opt.output_dir + '_' + opt.input_color_space
-
 if not opt.output_dir:
-    opt.output_dir = time.strftime("%Y-%m-%d_%H_%M_%S")
+    opt.output_dir = time.strftime("%m-%d_%H_%M_%S")
+
+opt.output_dir = opt.output_dir + '_' + opt.input_color_space
 
 Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -64,7 +64,7 @@ LUT2 = Generator3DLUT_zero(dim=36)
 # LUT3 = Generator3DLUT_zero()
 # LUT4 = Generator3DLUT_zero()
 classifier = Classifier()
-TV3 = TV_3D()
+TV3 = TV_3D(dim=36)
 trilinear_ = TrilinearInterpolation()
 
 if cuda:
