@@ -2,12 +2,15 @@
 # @Time : 2022/8/8 2:56 PM
 # @Author : zihua.zeng
 # @File : test.py
+import os
+
 import cv2
-import numpy as np
-
-from models import *
-
+import time
 import torchvision.transforms.functional as TF
+
+from pathlib import Path
+from models import *
+from porsche.media_processing import proc_video
 
 
 class Ada3DLUTV1:
@@ -47,7 +50,7 @@ class Ada3DLUTV1:
         return LUT
 
 
-if __name__ == '__main__':
+def infer_image():
     image_path = "/Users/zihua.zeng/Workspace/Image-Adaptive-3DLUT/demo_images/sRGB/1.png"
     model_path = "/Users/zihua.zeng/Workspace/Image-Adaptive-3DLUT/saved_models/_sRGB/classifier_163.pth"
     lut_path = "/Users/zihua.zeng/Workspace/Image-Adaptive-3DLUT/saved_models/_sRGB/LUTs_163.pth"
@@ -58,3 +61,27 @@ if __name__ == '__main__':
 
     vs_img = np.hstack([image, out])
     cv2.imwrite("output_vs.jpg", vs_img)
+    pass
+
+
+def infer_dark_video():
+    video_path = "/Users/zihua.zeng/Dataset/色彩增强数据集/mini_set_videos/dark"
+    out_path = "tmp_out/video_%s" % time.strftime("%m-%d_%H_%M_%S")
+    Path(out_path).mkdir(parents=True, exist_ok=True)
+
+    model_path = "/Users/zihua.zeng/Workspace/Image-Adaptive-3DLUT/saved_models/10-17_07_41_32_sRGB/classifier_163.pth"
+    lut_path = "/Users/zihua.zeng/Workspace/Image-Adaptive-3DLUT/saved_models/10-17_07_41_32_sRGB/LUTs_163.pth"
+    enhancer = Ada3DLUTV1(model_path, lut_path)
+
+    for vn in os.listdir(video_path):
+        if not vn.endswith(".mp4"):
+            continue
+        proc_video(os.path.join(video_path, vn), enhancer, out_path=os.path.join(out_path, vn))
+
+
+def infer_normal_video():
+    pass
+
+
+if __name__ == '__main__':
+    infer_dark_video()

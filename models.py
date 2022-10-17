@@ -20,10 +20,21 @@ def weights_init_normal_classifier(m):
         torch.nn.init.constant_(m.bias.data, 0.0)
 
 
-class resnet18_224(nn.Module):
+def discriminator_block(in_filters, out_filters, normalization=False):
+    """Returns downsampling layers of each discriminator block"""
+    layers = [nn.Conv2d(in_filters, out_filters, 3, stride=2, padding=1)]
+    layers.append(nn.LeakyReLU(0.2))
+    if normalization:
+        layers.append(nn.InstanceNorm2d(out_filters, affine=True))
+        # layers.append(nn.BatchNorm2d(out_filters))
+
+    return layers
+
+
+class Resnet18(nn.Module):
 
     def __init__(self, out_dim=5, aug_test=False):
-        super(resnet18_224, self).__init__()
+        super(Resnet18, self).__init__()
 
         self.aug_test = aug_test
         net = models.resnet18(pretrained=True)
@@ -42,173 +53,6 @@ class resnet18_224(nn.Module):
         f = self.model(x)
 
         return f
-
-
-##############################
-#           DPE
-##############################
-
-
-class UNetDown(nn.Module):
-    def __init__(self, in_size, out_size, normalize=True, dropout=0.0):
-        super(UNetDown, self).__init__()
-        layers = [nn.Conv2d(in_size, out_size, 5, 2, 2)]
-        layers.append(nn.SELU(inplace=True))
-        if normalize:
-            # layers.append(nn.BatchNorm2d(out_size))
-            nn.InstanceNorm2d(out_size, affine=True)
-        if dropout:
-            layers.append(nn.Dropout(dropout))
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.model(x)
-
-
-class UNetUp(nn.Module):
-    def __init__(self, in_size, out_size, normalize=True, dropout=0.0):
-        super(UNetUp, self).__init__()
-        layers = [
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(in_size, out_size, 3, padding=1),
-            nn.SELU(inplace=True),
-        ]
-
-        if normalize:
-            # layers.append(nn.BatchNorm2d(out_size))
-            nn.InstanceNorm2d(out_size, affine=True)
-
-        if dropout:
-            layers.append(nn.Dropout(dropout))
-
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x, skip_input):
-        x = self.model(x)
-        x = torch.cat((x, skip_input), 1)
-
-        return x
-
-
-class GeneratorUNet(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3):
-        super(GeneratorUNet, self).__init__()
-
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 16, 3, padding=1),
-            nn.SELU(inplace=True),
-            # nn.BatchNorm2d(16),
-            nn.InstanceNorm2d(16, affine=True),
-        )
-        self.down1 = UNetDown(16, 32)
-        self.down2 = UNetDown(32, 64)
-        self.down3 = UNetDown(64, 128)
-        self.down4 = UNetDown(128, 128)
-        self.down5 = UNetDown(128, 128)
-        self.down6 = UNetDown(128, 128)
-        self.down7 = nn.Sequential(
-            nn.Conv2d(128, 128, 3, padding=1),
-            nn.SELU(inplace=True),
-            nn.Conv2d(128, 128, 1, padding=0),
-        )
-
-        self.upsample = nn.Upsample(scale_factor=4, mode='bilinear')
-        self.conv1x1 = nn.Conv2d(256, 128, 1, padding=0)
-
-        self.up1 = UNetUp(128, 128)
-        self.up2 = UNetUp(256, 128)
-        self.up3 = UNetUp(192, 64)
-        self.up4 = UNetUp(96, 32)
-
-        self.final = nn.Sequential(
-            nn.Conv2d(48, 16, 3, padding=1),
-            nn.SELU(inplace=True),
-            # nn.BatchNorm2d(16),
-            # nn.InstanceNorm2d(16, affine = True),
-            nn.Conv2d(16, out_channels, 3, padding=1),
-            # nn.Tanh(),
-        )
-
-    def forward(self, x):
-        # U-Net generator with skip connections from encoder to decoder
-
-        x1 = self.conv1(x)
-        d1 = self.down1(x1)
-        d2 = self.down2(d1)
-        d3 = self.down3(d2)
-        d4 = self.down4(d3)
-
-        d5 = self.down5(d4)
-        d6 = self.down6(d5)
-        d7 = self.down7(d6)
-
-        d8 = self.upsample(d7)
-        d9 = torch.cat((d4, d8), 1)
-        d9 = self.conv1x1(d9)
-
-        u1 = self.up1(d9, d3)
-        u2 = self.up2(u1, d2)
-        u3 = self.up3(u2, d1)
-        u4 = self.up4(u3, x1)
-
-        return torch.add(self.final(u4), x)
-
-
-class Discriminator_UNet(nn.Module):
-    def __init__(self, in_channels=3):
-        super(Discriminator_UNet, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 16, 3, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
-            nn.InstanceNorm2d(16, affine=True),
-            *discriminator_block(16, 32),
-            *discriminator_block(32, 64),
-            *discriminator_block(64, 128),
-            *discriminator_block(128, 128),
-            *discriminator_block(128, 128),
-            nn.Conv2d(128, 1, 4, padding=0)
-        )
-
-    def forward(self, img_input):
-        return self.model(img_input)
-
-
-##############################
-#        Discriminator
-##############################
-
-
-def discriminator_block(in_filters, out_filters, normalization=False):
-    """Returns downsampling layers of each discriminator block"""
-    layers = [nn.Conv2d(in_filters, out_filters, 3, stride=2, padding=1)]
-    layers.append(nn.LeakyReLU(0.2))
-    if normalization:
-        layers.append(nn.InstanceNorm2d(out_filters, affine=True))
-        # layers.append(nn.BatchNorm2d(out_filters))
-
-    return layers
-
-
-class Discriminator(nn.Module):
-    def __init__(self, in_channels=3):
-        super(Discriminator, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Upsample(size=(256, 256), mode='bilinear'),
-            nn.Conv2d(3, 16, 3, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
-            nn.InstanceNorm2d(16, affine=True),
-            *discriminator_block(16, 32),
-            *discriminator_block(32, 64),
-            *discriminator_block(64, 128),
-            *discriminator_block(128, 128),
-            # *discriminator_block(128, 128),
-            nn.Conv2d(128, 1, 8, padding=0)
-        )
-
-    def forward(self, img_input):
-        return self.model(img_input)
 
 
 class Classifier(nn.Module):
@@ -226,51 +70,6 @@ class Classifier(nn.Module):
             *discriminator_block(128, 128),
             # *discriminator_block(128, 128, normalization=True),
             nn.Dropout(p=0.5),
-            nn.Conv2d(128, 3, 8, padding=0),
-        )
-
-    def forward(self, img_input):
-        return self.model(img_input)
-
-
-class resnet18_224(nn.Module):
-
-    def __init__(self, out_dim=5, aug_test=False):
-        super(resnet18_224, self).__init__()
-
-        self.aug_test = aug_test
-        net = models.resnet18(pretrained=True)
-        # self.mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
-        # self.std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
-
-        self.upsample = nn.Upsample(size=(224, 224), mode='bilinear')
-        net.fc = nn.Linear(512, out_dim)
-        self.model = net
-
-    def forward(self, x):
-        x = self.upsample(x)
-        if self.aug_test:
-            # x = torch.cat((x, torch.rot90(x, 1, [2, 3]), torch.rot90(x, 3, [2, 3])), 0)
-            x = torch.cat((x, torch.flip(x, [3])), 0)
-        f = self.model(x)
-
-        return f
-
-
-class Classifier_unpaired(nn.Module):
-    def __init__(self, in_channels=3):
-        super(Classifier_unpaired, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Upsample(size=(256, 256), mode='bilinear'),
-            nn.Conv2d(3, 16, 3, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
-            nn.InstanceNorm2d(16, affine=True),
-            *discriminator_block(16, 32),
-            *discriminator_block(32, 64),
-            *discriminator_block(64, 128),
-            *discriminator_block(128, 128),
-            # *discriminator_block(128, 128),
             nn.Conv2d(128, 3, 8, padding=0),
         )
 
@@ -404,7 +203,6 @@ class TV_3D(nn.Module):
 if __name__ == '__main__':
     from torchprofile import profile_macs
 
-    #
     # cls = Classifier()
     # inp = torch.rand((1, 3, 256, 256))
     # out = cls(inp)
@@ -423,13 +221,12 @@ if __name__ == '__main__':
 
     # 测试 resent 网络
     dummy_inp = torch.randn((1, 3, 224, 224))
-    resnet = resnet18_224(out_dim=3)
+    resnet = Resnet18(out_dim=3)
     out = resnet(dummy_inp)
     macs = profile_macs(resnet, dummy_inp)
     print(macs / 1e9)
 
-    classifier = Classifier()
-    classifier.load_state_dict(torch.load("resources/pretrained_models/sRGB/classifier.pth", map_location="cpu"))
-    classifier.eval()
-
-    torch.onnx.export(classifier, dummy_inp, "weight_predictor.onnx", )
+    # classifier = Classifier()
+    # classifier.load_state_dict(torch.load("resources/pretrained_models/sRGB/classifier.pth", map_location="cpu"))
+    # classifier.eval()
+    # torch.onnx.export(classifier, dummy_inp, "weight_predictor.onnx", )

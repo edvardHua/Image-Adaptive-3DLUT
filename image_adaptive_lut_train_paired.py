@@ -30,6 +30,7 @@ parser.add_argument("--n_epochs", type=int, default=400, help="total number of e
 parser.add_argument("--dataset_path", type=str,
                     default="/Users/zihua.zeng/Dataset/色彩增强数据集/Apple_Enhance_sub/Apple_Enhance",
                     help="Training Dataset path")
+parser.add_argument("--model_type", type=str, default="lite", help="lite, resnet etc")
 parser.add_argument("--input_color_space", type=str, default="sRGB", help="input color space: sRGB or XYZ")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
@@ -49,6 +50,7 @@ if not opt.output_dir:
 opt.output_dir = opt.output_dir + '_' + opt.input_color_space
 
 Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
+Path("saved_models/%s/best_model" % opt.output_dir).mkdir(parents=True, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 # Tensor type
@@ -63,7 +65,13 @@ LUT1 = Generator3DLUT_zero(dim=36)
 LUT2 = Generator3DLUT_zero(dim=36)
 # LUT3 = Generator3DLUT_zero()
 # LUT4 = Generator3DLUT_zero()
-classifier = Classifier()
+
+classifier = None
+if opt.model_type == "lite":
+    classifier = Classifier()
+elif opt.model_type == "resnet":
+    classifier = Resnet18()
+
 TV3 = TV_3D(dim=36)
 trilinear_ = TrilinearInterpolation()
 
@@ -251,6 +259,16 @@ for epoch in range(opt.epoch, opt.n_epochs):
     if avg_psnr > max_psnr:
         max_psnr = avg_psnr
         max_epoch = epoch
+        # 当前 psnr 值最高的单独放一个文件夹
+        LUTs = {"0": LUT0.state_dict(), "1": LUT1.state_dict(),
+                "2": LUT2.state_dict()}  # ,"3": LUT3.state_dict(),"4": LUT4.state_dict()
+        torch.save(LUTs, "saved_models/%s/best_model/LUTs_%d.pth" % (opt.output_dir, epoch))
+        torch.save(classifier.state_dict(), "saved_models/%s/best_model/classifier_%d.pth" % (opt.output_dir, epoch))
+        file = open('saved_models/%s/best_model/result.txt' % opt.output_dir, 'w')
+        file.write(" [PSNR: %f] [max PSNR: %f, epoch: %d]\n" % (avg_psnr, max_psnr, max_epoch))
+        file.flush()
+        file.close()
+
     sys.stdout.write(" [PSNR: %f] [max PSNR: %f, epoch: %d]\n" % (avg_psnr, max_psnr, max_epoch))
 
     if epoch % opt.checkpoint_interval == 0:
