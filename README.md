@@ -19,9 +19,7 @@ $ tree -L 1 .
 ├── image_adaptive_lut_train_paired.py # 模型训练
 ├── models.py # 模型定义
 ├── datasets.py # 数据集
-├── video_demo_eval.py # 测试在视频上的增强效果
 ├── torchvision_x_functional.py # pytorch 一些函数的封装
-├── demo_eval.py # 测试在图片上的效果
 ├── converter.py # 转换模型，转换参数，用于在 ios 上运行
 └── README.md 
 ```

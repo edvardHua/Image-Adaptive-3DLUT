@@ -185,13 +185,15 @@ class ImageDataset_apple_sRGB(Dataset):
         self.set1_input_files.sort()
         self.set1_expert_files.sort()
 
+        evalnum = int(len(self.set1_input_files) * 0.15)
+
         if self.mode == "train":
-            self.set1_input_files = self.set1_input_files[:-250]
-            self.set1_expert_files = self.set1_expert_files[:-250]
+            self.set1_input_files = self.set1_input_files[:-evalnum]
+            self.set1_expert_files = self.set1_expert_files[:-evalnum]
 
         if self.mode == "test":
-            self.set1_input_files = self.set1_input_files[-250:]
-            self.set1_expert_files = self.set1_expert_files[-250:]
+            self.set1_input_files = self.set1_input_files[-evalnum:]
+            self.set1_expert_files = self.set1_expert_files[-evalnum:]
 
     def __getitem__(self, index):
 
@@ -246,5 +248,6 @@ if __name__ == '__main__':
 
     for batch in dataloader:
         from IPython import embed
+
         embed()
         break
