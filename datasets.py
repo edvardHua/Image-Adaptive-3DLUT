@@ -180,7 +180,7 @@ class ImageDataset_apple_sRGB(Dataset):
         self.set1_expert_files = os.listdir(os.path.join(root, "target"))
 
         self.set1_input_files = list(filter(lambda x: x.endswith(".jpg"), self.set1_input_files))
-        self.set1_expert_files = list(filter(lambda x: x.endswith(".jpeg"), self.set1_expert_files))
+        self.set1_expert_files = list(filter(lambda x: x.endswith(".jpg"), self.set1_expert_files))
 
         self.set1_input_files.sort()
         self.set1_expert_files.sort()
@@ -196,9 +196,7 @@ class ImageDataset_apple_sRGB(Dataset):
             self.set1_expert_files = self.set1_expert_files[-evalnum:]
 
     def __getitem__(self, index):
-
         index_id = index % len(self.set1_input_files)
-
         img_name = self.set1_input_files[index_id]
         img_input = Image.open(os.path.join(self.root, "source", self.set1_input_files[index_id]))
         img_exptC = Image.open(os.path.join(self.root, "target", self.set1_expert_files[index_id]))
@@ -241,13 +239,10 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     dataloader = DataLoader(
-        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/Apple_Enhance_sub/Apple_Enhance", mode="test"),
+        ImageDataset_apple_sRGB("/Users/zihua.zeng/Dataset/色彩增强数据集/lle_train_data/lle_1017", mode="train"),
         batch_size=1,
         shuffle=True
     )
 
     for batch in dataloader:
-        from IPython import embed
-
-        embed()
-        break
+        continue
