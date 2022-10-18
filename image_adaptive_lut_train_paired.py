@@ -30,6 +30,7 @@ parser.add_argument("--n_epochs", type=int, default=400, help="total number of e
 parser.add_argument("--dataset_path", type=str,
                     default="/Users/zihua.zeng/Dataset/色彩增强数据集/Apple_Enhance_sub/Apple_Enhance",
                     help="Training Dataset path")
+parser.add_argument("--model_type", type=str, default="lite", help="lite, resnet")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.9, help="adam: decay of first order momentum of gradient")
