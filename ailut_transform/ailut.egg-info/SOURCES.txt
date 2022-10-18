@@ -1,0 +1,14 @@
+setup.py
+ailut/__init__.py
+ailut/pyinterfaces.py
+ailut/version.py
+ailut.egg-info/PKG-INFO
+ailut.egg-info/SOURCES.txt
+ailut.egg-info/dependency_links.txt
+ailut.egg-info/not-zip-safe
+ailut.egg-info/top_level.txt
+ailut/csrc/ailut_transform.cpp
+ailut/csrc/ailut_transform_cpu.cpp
+ailut/csrc/ailut_transform_cuda.cu
+ailut/csrc/ailut_transform_pure_cpu.cpp
+ailut/csrc/ailut_transform_pure_cpu.h

@@ -1,0 +1,20 @@
+ninja_required_version = 1.3
+cxx = c++
+
+cflags = -Wno-unused-result -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -fwrapv -O3 -Wall -arch x86_64 -g -I/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/torch/include -I/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/torch/include/TH -I/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/torch/include/THC -I/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m -c
+post_cflags = -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14
+ldflags = 
+
+rule compile
+  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags
+  depfile = $out.d
+  deps = gcc
+
+
+
+build /Users/zihua.zeng/Workspace/imageadaptive3dlut/ailut_transform/build/temp.macosx-10.9-x86_64-3.7/ailut/csrc/ailut_transform_pure_cpu.o: compile /Users/zihua.zeng/Workspace/imageadaptive3dlut/ailut_transform/ailut/csrc/ailut_transform_pure_cpu.cpp
+
+
+
+
+

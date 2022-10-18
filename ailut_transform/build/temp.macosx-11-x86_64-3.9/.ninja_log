@@ -1,0 +1,5 @@
+# ninja log v5
+0	13126	1656471226616738380	/Users/zihua.zeng/Workspace/AdaInt/adaint/ailut_transform/build/temp.macosx-11-x86_64-3.9/ailut/csrc/ailut_transform_cpu.o	fec5e9d964be4ae0
+5	14254	1656472036897063501	/Users/zihua.zeng/Workspace/AdaInt/adaint/ailut_transform/build/temp.macosx-11-x86_64-3.9/ailut/csrc/ailut_transform.o	f90cfc3f4cc8c216
+1	11174	1656487221078074776	/Users/zihua.zeng/Workspace/AdaInt/adaint/ailut_transform/build/temp.macosx-11-x86_64-3.9/ailut/csrc/ailut_transform_pure_cpu.o	14e5abca76645744
+5	15517	1656488206955603015	/Users/zihua.zeng/Workspace/AdaInt/adaint/ailut_transform/build/temp.macosx-11-x86_64-3.9/ailut/csrc/ailut_transform_pure_cpu.o	14e5abca76645744
