@@ -35,7 +35,7 @@ parser.add_argument("--b1", type=float, default=0.9, help="adam: decay of first 
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--lambda_smooth", type=float, default=0.0001, help="smooth regularization")
 parser.add_argument("--lambda_monotonicity", type=float, default=10.0, help="monotonicity regularization")
-parser.add_argument("--n_cpu", type=int, default=4, help="number of cpu threads to use during batch generation")
+parser.add_argument("--n_cpu", type=int, default=1, help="number of cpu threads to use during batch generation")
 parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between model checkpoints")
 parser.add_argument("--output_dir", type=str, default="",
                     help="path to save model")
@@ -77,9 +77,9 @@ cuda = True if torch.cuda.is_available() else False
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 criterion_pixelwise = torch.nn.MSELoss()
 
-model = AiLUT()
+model = AiLUT(n_vertices=opt.n_vertices)
 
-TV3 = TV_3D(dim=36)
+TV3 = TV_3D(dim=opt.n_vertices)
 trilinear_ = TrilinearInterpolation()
 
 if cuda:

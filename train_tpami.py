@@ -84,7 +84,7 @@ LUT2 = Generator3DLUT_zero(dim=opt.n_vertices)
 model = TPAMIBackbone()
 model.apply(weights_init_normal_classifier)
 
-TV3 = TV_3D(dim=36)
+TV3 = TV_3D(dim=opt.n_vertices)
 trilinear_ = TrilinearInterpolation()
 
 if cuda:
