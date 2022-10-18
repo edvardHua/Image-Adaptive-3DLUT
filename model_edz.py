@@ -61,10 +61,7 @@ class TPAMIBackbone(nn.Sequential):
     def forward(self, imgs):
         imgs = F.interpolate(imgs, size=(self.input_resolution,) * 2,
                              mode='bilinear', align_corners=False)
-
         tmp = super().forward(imgs)
-        print(tmp.shape)
-
         return tmp.view(imgs.shape[0], -1)
 
 
@@ -155,7 +152,7 @@ class AiLUT(nn.Module):
         weights, luts = self.lut_generator(codes)
         vertices = self.uniform_vertices
         outs = ailut_transform(x, luts, vertices)
-        return outs, weights, vertices
+        return outs, weights, luts, vertices
 
 
 if __name__ == '__main__':
