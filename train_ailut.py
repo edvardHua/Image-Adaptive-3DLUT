@@ -150,7 +150,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # Pixel-wise loss
         mse = criterion_pixelwise(fake_B, real_B)
 
-        tv_cons, mn_cons = TV3(lut)
+        tv_cons, mn_cons = TV3(lut.squeeze())
 
         loss = mse + opt.lambda_smooth * (weights_norm + tv_cons) + opt.lambda_monotonicity * mn_cons
 
