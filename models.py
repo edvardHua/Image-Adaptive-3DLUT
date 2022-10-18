@@ -189,9 +189,9 @@ class TV_3D(nn.Module):
         self.relu = torch.nn.ReLU()
 
     def forward(self, LUT):
-        dif_r = LUT.LUT[:, :, :, :-1] - LUT.LUT[:, :, :, 1:]
-        dif_g = LUT.LUT[:, :, :-1, :] - LUT.LUT[:, :, 1:, :]
-        dif_b = LUT.LUT[:, :-1, :, :] - LUT.LUT[:, 1:, :, :]
+        dif_r = LUT[:, :, :, :-1] - LUT[:, :, :, 1:]
+        dif_g = LUT[:, :, :-1, :] - LUT[:, :, 1:, :]
+        dif_b = LUT[:, :-1, :, :] - LUT[:, 1:, :, :]
         tv = torch.mean(torch.mul((dif_r ** 2), self.weight_r)) + torch.mean(
             torch.mul((dif_g ** 2), self.weight_g)) + torch.mean(torch.mul((dif_b ** 2), self.weight_b))
 
@@ -203,9 +203,11 @@ class TV_3D(nn.Module):
 if __name__ == '__main__':
     from torchprofile import profile_macs
 
-    # cls = Classifier()
-    # inp = torch.rand((1, 3, 256, 256))
-    # out = cls(inp)
+    cls = Classifier()
+    inp = torch.rand((1, 3, 256, 256))
+    out = cls(inp)
+    print(out.shape)
+
     # print(inp.shape, out.shape)
     # macs = profile_macs(cls, inp)
     # # 0.074 GFLOPs
@@ -220,11 +222,11 @@ if __name__ == '__main__':
     # print(out[0].shape, out[1].shape)
 
     # 测试 resent 网络
-    dummy_inp = torch.randn((1, 3, 224, 224))
-    resnet = Resnet18(out_dim=3)
-    out = resnet(dummy_inp)
-    macs = profile_macs(resnet, dummy_inp)
-    print(macs / 1e9)
+    # dummy_inp = torch.randn((1, 3, 224, 224))
+    # resnet = Resnet18(out_dim=3)
+    # out = resnet(dummy_inp)
+    # macs = profile_macs(resnet, dummy_inp)
+    # print(macs / 1e9)
 
     # classifier = Classifier()
     # classifier.load_state_dict(torch.load("resources/pretrained_models/sRGB/classifier.pth", map_location="cpu"))

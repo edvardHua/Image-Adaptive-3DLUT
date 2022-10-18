@@ -172,9 +172,9 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # Pixel-wise loss
         mse = criterion_pixelwise(fake_B, real_B)
 
-        tv0, mn0 = TV3(LUT0)
-        tv1, mn1 = TV3(LUT1)
-        tv2, mn2 = TV3(LUT2)
+        tv0, mn0 = TV3(LUT0.LUT)
+        tv1, mn1 = TV3(LUT1.LUT)
+        tv2, mn2 = TV3(LUT2.LUT)
         tv_cons = tv0 + tv1 + tv2
         mn_cons = mn0 + mn1 + mn2
 
