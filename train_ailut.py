@@ -99,7 +99,6 @@ optimizer_G = torch.optim.Adam(
 # 4. 训练与评估
 def generator_train(img):
     out, weights, lut, _ = model(img)
-
     weights_norm = torch.mean(weights.squeeze() ** 2)
     return out.squeeze(), weights_norm, lut.squeeze()
 
@@ -148,9 +147,9 @@ for epoch in range(opt.epoch, opt.n_epochs):
         fake_B, weights_norm, lut = generator_train(real_A)
 
         # Pixel-wise loss
-        mse = criterion_pixelwise(fake_B, real_B)
+        mse = criterion_pixelwise(fake_B.unsqueeze(0), real_B)
 
-        tv_cons, mn_cons = TV3(lut.squeeze())
+        tv_cons, mn_cons = TV3(lut)
 
         loss = mse + opt.lambda_smooth * (weights_norm + tv_cons) + opt.lambda_monotonicity * mn_cons
 
