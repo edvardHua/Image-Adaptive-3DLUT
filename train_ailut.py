@@ -40,15 +40,18 @@ parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval
 parser.add_argument("--output_dir", type=str, default="",
                     help="path to save model")
 parser.add_argument("--fixed_seed", type=str, default="False", help="whether fixed seed or not")
+parser.add_argument("--test_mode", type=str, default="False", help="whether test or not")
 
 # 1. 读取配置，创建相关文件夹
 opt = parser.parse_args()
 if not opt.output_dir:
     opt.output_dir = time.strftime("%m-%d_%H_%M_%S") + "_ailut"
-Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
-Path("saved_models/%s/best_model" % opt.output_dir).mkdir(parents=True, exist_ok=True)
-# 保存当前训练的配置
-json.dump(vars(opt), open("saved_models/%s/best_model/config.json" % opt.output_dir, "w"))
+
+if not eval(opt.test_mode):
+    Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
+    Path("saved_models/%s/best_model" % opt.output_dir).mkdir(parents=True, exist_ok=True)
+    # 保存当前训练的配置
+    json.dump(vars(opt), open("saved_models/%s/best_model/config.json" % opt.output_dir, "w"))
 
 # 2. 加载数据集
 dataloader = DataLoader(

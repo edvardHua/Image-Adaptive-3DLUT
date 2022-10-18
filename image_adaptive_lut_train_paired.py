@@ -30,8 +30,6 @@ parser.add_argument("--n_epochs", type=int, default=400, help="total number of e
 parser.add_argument("--dataset_path", type=str,
                     default="/Users/zihua.zeng/Dataset/色彩增强数据集/Apple_Enhance_sub/Apple_Enhance",
                     help="Training Dataset path")
-parser.add_argument("--model_type", type=str, default="lite", help="lite, resnet etc")
-parser.add_argument("--input_color_space", type=str, default="sRGB", help="input color space: sRGB or XYZ")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.9, help="adam: decay of first order momentum of gradient")
@@ -42,15 +40,17 @@ parser.add_argument("--n_cpu", type=int, default=1, help="number of cpu threads 
 parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between model checkpoints")
 parser.add_argument("--output_dir", type=str, default="",
                     help="path to save model")
+parser.add_argument("--test_mode", type=str, default="False", help="whether test or not")
+
 opt = parser.parse_args()
 
 if not opt.output_dir:
     opt.output_dir = time.strftime("%m-%d_%H_%M_%S")
 
-opt.output_dir = opt.output_dir + '_' + opt.input_color_space
-
-Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
-Path("saved_models/%s/best_model" % opt.output_dir).mkdir(parents=True, exist_ok=True)
+if not eval(opt.test_mode):
+    opt.output_dir = opt.output_dir + '_tpami'
+    Path("saved_models/%s" % opt.output_dir).mkdir(parents=True, exist_ok=True)
+    Path("saved_models/%s/best_model" % opt.output_dir).mkdir(parents=True, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 # Tensor type
@@ -220,9 +220,9 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # Pixel-wise loss
         mse = criterion_pixelwise(fake_B, real_B)
 
-        tv0, mn0 = TV3(LUT0)
-        tv1, mn1 = TV3(LUT1)
-        tv2, mn2 = TV3(LUT2)
+        tv0, mn0 = TV3(LUT0.LUT)
+        tv1, mn1 = TV3(LUT1.LUT)
+        tv2, mn2 = TV3(LUT2.LUT)
         # tv3, mn3 = TV3(LUT3)
         # tv4, mn4 = TV3(LUT4)
         tv_cons = tv0 + tv1 + tv2  # + tv3 + tv4
